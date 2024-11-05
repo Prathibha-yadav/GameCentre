@@ -1,6 +1,5 @@
 import javax.swing.*;
 import java.awt.*;
-import java.util.Stack;
 
 public class TowerOfHanoi {
     private static int totalDisks;

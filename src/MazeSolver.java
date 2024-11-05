@@ -3,12 +3,15 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Random;
+import java.util.Stack;
 
 public class MazeSolver {
     private static int[][] maze;
     private static JButton[][] buttons;
     private static int playerX = 0; // Player's current X position
     private static int playerY = 0; // Player's current Y position
+    private static boolean[][] visited; // Track visited positions for DFS
+    private static Stack<Point> pathStack; // Stack to store the path taken
 
     public static void play() {
         generateMaze(); // Generate a random maze
@@ -53,6 +56,9 @@ public class MazeSolver {
                         break;
                     case KeyEvent.VK_RIGHT:
                         movePlayer(0, 1);
+                        break;
+                    case KeyEvent.VK_S: // Press 'S' to solve the maze
+                        solveMaze();
                         break;
                 }
             }
@@ -105,6 +111,50 @@ public class MazeSolver {
         }
         for (int j = 1; j < maze[0].length; j++) {
             maze[maze.length - 1][j] = 1; // Create a path in the last row
+        }
+    }
+
+    private static void solveMaze() {
+        visited = new boolean[maze.length][maze[0].length];
+        pathStack = new Stack<>();
+        
+        if (dfs(playerX, playerY)) {
+            JOptionPane.showMessageDialog(null, "Maze solved! Path highlighted.");
+            highlightSolutionPath();
+        } else {
+            JOptionPane.showMessageDialog(null, "No solution found.");
+        }
+    }
+
+    private static boolean dfs(int x, int y) {
+        if (x == maze.length - 1 && y == maze[0].length - 1) {
+            pathStack.push(new Point(x, y));
+            return true; // Reached the end
+        }
+
+        // Check if the position is valid
+        if (x < 0 || x >= maze.length || y < 0 || y >= maze[0].length || maze[x][y] == 0 || visited[x][y]) {
+            return false; // Invalid position
+        }
+
+        // Mark the cell as visited
+        visited[x][y] = true;
+        pathStack.push(new Point(x, y)); // Add position to the path
+
+        // Explore neighbors: down, up, right, left
+        if (dfs(x + 1, y) || dfs(x - 1, y) || dfs(x, y + 1) || dfs(x, y - 1)) {
+            return true; // If one of the paths leads to the exit
+        }
+
+        // Backtrack if no path found
+        pathStack.pop();
+        return false;
+    }
+
+    private static void highlightSolutionPath() {
+        while (!pathStack.isEmpty()) {
+            Point p = pathStack.pop();
+            buttons[p.x][p.y].setBackground(Color.GREEN); // Highlight the solution path in green
         }
     }
 
