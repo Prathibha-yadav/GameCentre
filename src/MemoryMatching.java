@@ -11,11 +11,14 @@ public class MemoryMatching {
     private static String[] cardValues = {"A", "A", "B", "B", "C", "C", "D", "D",
             "E", "E", "F", "F", "G", "G", "H", "H"};
     private static int firstCardIndex = -1;
+    private static int matchedPairs = 0;
+    private static int attempts = 0;
 
     public static void play() {
         JFrame frame = new JFrame("Memory Matching Game");
         frame.setSize(400, 400);
         frame.setLayout(new GridLayout(4, 4));
+        
         List<String> values = Arrays.asList(cardValues);
         Collections.shuffle(values);
         values.toArray(cardValues);
@@ -31,7 +34,9 @@ public class MemoryMatching {
                         buttons[index].setText(cardValues[index]);
                     } else {
                         buttons[index].setText(cardValues[index]);
+                        attempts++;
                         if (!cardValues[firstCardIndex].equals(cardValues[index])) {
+                            // If the cards don't match, hide them again after a delay
                             Timer timer = new Timer(1000, new ActionListener() {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
@@ -43,7 +48,14 @@ public class MemoryMatching {
                             timer.setRepeats(false);
                             timer.start();
                         } else {
-                            firstCardIndex = -1; // Reset for next turn
+                            // Cards match
+                            matchedPairs++;
+                            firstCardIndex = -1; // Reset for the next turn
+                            // Check if the game is over
+                            if (matchedPairs == 8) {
+                                JOptionPane.showMessageDialog(frame, "Congratulations! You've matched all pairs in " + attempts + " attempts.");
+                                frame.dispose(); // Close the game
+                            }
                         }
                     }
                 }

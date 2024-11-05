@@ -15,40 +15,49 @@ public class MazeSolver {
     };
     private static boolean[][] visited;
     private static List<Point> path = new ArrayList<>();
+    private static JButton[][] buttons;
 
     public static void play() {
         visited = new boolean[maze.length][maze[0].length];
         JFrame frame = new JFrame("Maze Solver");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(300, 300);
+        frame.setSize(400, 400);
         frame.setLayout(new GridLayout(maze.length, maze[0].length));
 
-        JButton[][] buttons = new JButton[maze.length][maze[0].length];
+        buttons = new JButton[maze.length][maze[0].length];
         for (int i = 0; i < maze.length; i++) {
             for (int j = 0; j < maze[0].length; j++) {
                 buttons[i][j] = new JButton();
                 if (maze[i][j] == 1) {
-                    buttons[i][j].setBackground(Color.WHITE);
+                    buttons[i][j].setBackground(Color.WHITE); // Open path
                 } else {
-                    buttons[i][j].setBackground(Color.BLACK);
+                    buttons[i][j].setBackground(Color.BLACK); // Wall
                 }
                 buttons[i][j].setEnabled(false); // Disable button clicks
                 frame.add(buttons[i][j]);
             }
         }
 
-        if (solveMaze(0, 0)) {
-            for (Point p : path) {
-                buttons[p.x][p.y].setBackground(Color.GREEN);
+        JButton solveButton = new JButton("Solve Maze");
+        solveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (solveMaze(0, 0)) {
+                    for (Point p : path) {
+                        buttons[p.x][p.y].setBackground(Color.GREEN); // Highlight the path
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(frame, "No path found!");
+                }
             }
-        } else {
-            JOptionPane.showMessageDialog(frame, "No path found!");
-        }
+        });
 
+        frame.add(solveButton);
         frame.setVisible(true);
     }
 
     private static boolean solveMaze(int x, int y) {
+        // Check for out of bounds and whether the cell is a wall or already visited
         if (x < 0 || x >= maze.length || y < 0 || y >= maze[0].length || maze[x][y] == 0 || visited[x][y]) {
             return false;
         }

@@ -4,7 +4,7 @@ import java.util.Random;
 public class GuessTheNumber {
     public static void play() {
         Random random = new Random();
-        int number = random.nextInt(100) + 1;
+        int number = random.nextInt(15) + 1;
         int attempts = 0;
 
         String userInput;
