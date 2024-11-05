@@ -1,116 +1,140 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Random;
 
 public class WordSearch {
     private static JTextArea puzzleArea;
     private static JTextArea wordArea;
     private static JTextArea resultArea;
+    private static JButton checkButton;
+    private static JButton generateButton;
+    private static int score;
+
+    private static final String[] WORDS = {"JAVA", "SWING", "PROGRAMMING", "CODE", "COMPUTER", "LANGUAGE", "DEVELOPER", "FUNCTION"};
 
     public static void play() {
-        JFrame frame = new JFrame("Word Search");
-        frame.setSize(500, 400);
+        score = 0; // Reset score for each new game
+        generatePuzzle();
+
+        JFrame frame = new JFrame("Word Search Game");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setSize(600, 400);
         frame.setLayout(new BorderLayout());
 
-        puzzleArea = new JTextArea(10, 30);
-        wordArea = new JTextArea(5, 30);
-        resultArea = new JTextArea(5, 30);
+        puzzleArea = new JTextArea();
+        puzzleArea.setFont(new Font("Monospaced", Font.PLAIN, 20));
+        puzzleArea.setEditable(false);
+
+        wordArea = new JTextArea();
+        wordArea.setFont(new Font("Monospaced", Font.PLAIN, 16));
+        wordArea.setEditable(true);
+        wordArea.setLineWrap(true);
+        wordArea.setWrapStyleWord(true);
+
+        resultArea = new JTextArea();
+        resultArea.setFont(new Font("Monospaced", Font.PLAIN, 16));
         resultArea.setEditable(false);
+        resultArea.setText("Score: " + score);
 
-        JButton checkButton = new JButton("Check Words");
-        
-        checkButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String puzzleText = puzzleArea.getText().trim();
-                String wordsText = wordArea.getText().trim();
-                String[] words = wordsText.split(",");
+        checkButton = new JButton("Check Words");
+        checkButton.addActionListener(e -> checkWords());
 
-                List<String> foundWords = new ArrayList<>();
-                for (String word : words) {
-                    word = word.trim();
-                    if (wordExistsInPuzzle(puzzleText, word)) {
-                        foundWords.add(word);
-                    }
-                }
+        generateButton = new JButton("Generate New Puzzle");
+        generateButton.addActionListener(e -> generatePuzzle());
 
-                if (foundWords.isEmpty()) {
-                    resultArea.setText("No words found.");
-                } else {
-                    resultArea.setText("Found Words: " + String.join(", ", foundWords));
-                }
-            }
-        });
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(checkButton);
+        buttonPanel.add(generateButton);
 
-        frame.add(new JLabel("Enter Word Search Puzzle (one line per row):"), BorderLayout.NORTH);
         frame.add(new JScrollPane(puzzleArea), BorderLayout.CENTER);
-        frame.add(new JLabel("Enter Words (comma separated):"), BorderLayout.EAST);
-        frame.add(new JScrollPane(wordArea), BorderLayout.SOUTH);
-        frame.add(checkButton, BorderLayout.WEST);
-        frame.add(new JScrollPane(resultArea), BorderLayout.EAST);
+        frame.add(new JScrollPane(wordArea), BorderLayout.EAST);
+        frame.add(new JScrollPane(resultArea), BorderLayout.SOUTH);
+        frame.add(buttonPanel, BorderLayout.NORTH);
 
         frame.setVisible(true);
     }
 
-    private static boolean wordExistsInPuzzle(String puzzle, String word) {
-        String[] rows = puzzle.split("\n");
-        for (String row : rows) {
-            if (row.contains(word)) {
-                return true;
+    private static void generatePuzzle() {
+        StringBuilder puzzle = new StringBuilder();
+        char[][] grid = new char[10][10];
+
+        // Fill grid with random letters
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 10; j++) {
+                grid[i][j] = (char) ('A' + new Random().nextInt(26));
             }
         }
 
-        // Check for words vertically
-        for (int col = 0; col < rows[0].length(); col++) {
-            StringBuilder columnWord = new StringBuilder();
-            for (String row : rows) {
-                if (col < row.length()) {
-                    columnWord.append(row.charAt(col));
-                }
-            }
-            if (columnWord.toString().contains(word)) {
-                return true;
-            }
+        // Place words in grid
+        for (String word : WORDS) {
+            placeWordInGrid(grid, word);
         }
 
-        // Check for words diagonally
-        return checkDiagonally(rows, word);
+        // Build the puzzle string
+        for (char[] row : grid) {
+            for (char c : row) {
+                puzzle.append(c).append(" ");
+            }
+            puzzle.append("\n");
+        }
+
+        puzzleArea.setText(puzzle.toString());
+        wordArea.setText("");
+        resultArea.setText("Score: " + score);
     }
 
-    private static boolean checkDiagonally(String[] rows, String word) {
-        int numRows = rows.length;
-        int numCols = rows[0].length();
+    private static void placeWordInGrid(char[][] grid, String word) {
+        Random rand = new Random();
+        int wordLength = word.length();
+        boolean placed = false;
 
-        // Check diagonal from top-left to bottom-right
-        for (int row = 0; row <= numRows - word.length(); row++) {
-            for (int col = 0; col <= numCols - word.length(); col++) {
-                StringBuilder diagonalWord = new StringBuilder();
-                for (int k = 0; k < word.length(); k++) {
-                    diagonalWord.append(rows[row + k].charAt(col + k));
+        while (!placed) {
+            int direction = rand.nextInt(2); // 0 for horizontal, 1 for vertical
+            int row = rand.nextInt(grid.length);
+            int col = rand.nextInt(grid[0].length);
+
+            // Check if word can fit
+            if (direction == 0 && col + wordLength <= grid[0].length) { // Horizontal
+                boolean canPlace = true;
+                for (int i = 0; i < wordLength; i++) {
+                    if (grid[row][col + i] != ' ') {
+                        canPlace = false;
+                        break;
+                    }
                 }
-                if (diagonalWord.toString().equals(word)) {
-                    return true;
+                if (canPlace) {
+                    for (int i = 0; i < wordLength; i++) {
+                        grid[row][col + i] = word.charAt(i);
+                    }
+                    placed = true;
+                }
+            } else if (direction == 1 && row + wordLength <= grid.length) { // Vertical
+                boolean canPlace = true;
+                for (int i = 0; i < wordLength; i++) {
+                    if (grid[row + i][col] != ' ') {
+                        canPlace = false;
+                        break;
+                    }
+                }
+                if (canPlace) {
+                    for (int i = 0; i < wordLength; i++) {
+                        grid[row + i][col] = word.charAt(i);
+                    }
+                    placed = true;
                 }
             }
         }
+    }
 
-        // Check diagonal from top-right to bottom-left
-        for (int row = 0; row <= numRows - word.length(); row++) {
-            for (int col = word.length() - 1; col < numCols; col++) {
-                StringBuilder diagonalWord = new StringBuilder();
-                for (int k = 0; k < word.length(); k++) {
-                    diagonalWord.append(rows[row + k].charAt(col - k));
-                }
-                if (diagonalWord.toString().equals(word)) {
-                    return true;
-                }
+    private static void checkWords() {
+        String[] enteredWords = wordArea.getText().toUpperCase().split("\\s+");
+        for (String word : enteredWords) {
+            if (Arrays.asList(WORDS).contains(word)) {
+                score++;
             }
         }
-
-        return false;
+        resultArea.setText("Score: " + score);
+        wordArea.setText("");
     }
 }

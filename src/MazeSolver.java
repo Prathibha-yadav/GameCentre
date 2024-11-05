@@ -1,30 +1,26 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.util.Random;
 
 public class MazeSolver {
-    private static int[][] maze = {
-            {1, 0, 0, 0, 0},
-            {1, 1, 1, 1, 0},
-            {0, 0, 0, 1, 0},
-            {0, 1, 1, 1, 1},
-            {0, 0, 0, 0, 1}
-    };
-    private static boolean[][] visited;
-    private static List<Point> path = new ArrayList<>();
+    private static int[][] maze;
     private static JButton[][] buttons;
+    private static int playerX = 0; // Player's current X position
+    private static int playerY = 0; // Player's current Y position
 
     public static void play() {
-        visited = new boolean[maze.length][maze[0].length];
-        JFrame frame = new JFrame("Maze Solver");
+        generateMaze(); // Generate a random maze
+        
+        JFrame frame = new JFrame("Interactive Maze Solver");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setSize(400, 400);
-        frame.setLayout(new GridLayout(maze.length, maze[0].length));
+        frame.setLayout(new BorderLayout());
 
+        JPanel mazePanel = new JPanel(new GridLayout(maze.length, maze[0].length));
         buttons = new JButton[maze.length][maze[0].length];
+        
         for (int i = 0; i < maze.length; i++) {
             for (int j = 0; j < maze[0].length; j++) {
                 buttons[i][j] = new JButton();
@@ -34,49 +30,85 @@ public class MazeSolver {
                     buttons[i][j].setBackground(Color.BLACK); // Wall
                 }
                 buttons[i][j].setEnabled(false); // Disable button clicks
-                frame.add(buttons[i][j]);
+                mazePanel.add(buttons[i][j]);
             }
         }
 
-        JButton solveButton = new JButton("Solve Maze");
-        solveButton.addActionListener(new ActionListener() {
+        // Highlight the initial player position
+        highlightPlayerPosition();
+
+        // Key listener for player movement
+        frame.addKeyListener(new KeyAdapter() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                if (solveMaze(0, 0)) {
-                    for (Point p : path) {
-                        buttons[p.x][p.y].setBackground(Color.GREEN); // Highlight the path
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(frame, "No path found!");
+            public void keyPressed(KeyEvent e) {
+                switch (e.getKeyCode()) {
+                    case KeyEvent.VK_UP:
+                        movePlayer(-1, 0);
+                        break;
+                    case KeyEvent.VK_DOWN:
+                        movePlayer(1, 0);
+                        break;
+                    case KeyEvent.VK_LEFT:
+                        movePlayer(0, -1);
+                        break;
+                    case KeyEvent.VK_RIGHT:
+                        movePlayer(0, 1);
+                        break;
                 }
             }
         });
 
-        frame.add(solveButton);
+        frame.add(mazePanel, BorderLayout.CENTER);
         frame.setVisible(true);
     }
 
-    private static boolean solveMaze(int x, int y) {
-        // Check for out of bounds and whether the cell is a wall or already visited
-        if (x < 0 || x >= maze.length || y < 0 || y >= maze[0].length || maze[x][y] == 0 || visited[x][y]) {
-            return false;
+    private static void movePlayer(int deltaX, int deltaY) {
+        int newX = playerX + deltaX;
+        int newY = playerY + deltaY;
+
+        // Check for out of bounds and walls
+        if (newX >= 0 && newX < maze.length && newY >= 0 && newY < maze[0].length && maze[newX][newY] == 1) {
+            // Move player to the new position
+            buttons[playerX][playerY].setBackground(Color.WHITE); // Reset previous position to white
+            playerX = newX;
+            playerY = newY;
+            highlightPlayerPosition(); // Highlight new position
+
+            // Check if the player reached the exit
+            if (playerX == maze.length - 1 && playerY == maze[0].length - 1) {
+                JOptionPane.showMessageDialog(null, "Congratulations! You've solved the maze!");
+            }
         }
+    }
 
-        visited[x][y] = true; // Mark the cell as visited
-        path.add(new Point(x, y)); // Add the current cell to the path
+    private static void highlightPlayerPosition() {
+        buttons[playerX][playerY].setBackground(Color.BLUE); // Highlight current position
+    }
 
-        // Check if we've reached the destination
-        if (x == maze.length - 1 && y == maze[0].length - 1) {
-            return true;
+    private static void generateMaze() {
+        // Simple maze generation for demonstration purposes
+        Random rand = new Random();
+        maze = new int[5][5];
+        
+        for (int i = 0; i < maze.length; i++) {
+            for (int j = 0; j < maze[0].length; j++) {
+                maze[i][j] = rand.nextInt(2); // Randomly assign 0 (wall) or 1 (path)
+            }
         }
-
-        // Explore the neighbors (right, down, left, up)
-        if (solveMaze(x + 1, y) || solveMaze(x, y + 1) || solveMaze(x - 1, y) || solveMaze(x, y - 1)) {
-            return true;
+        // Ensure start and end points are paths
+        maze[0][0] = 1; // Start
+        maze[maze.length - 1][maze[0].length - 1] = 1; // End
+        
+        // Ensure there's at least one path from start to finish
+        for (int i = 1; i < maze.length; i++) {
+            maze[i][0] = 1; // Create a path in the first column
         }
+        for (int j = 1; j < maze[0].length; j++) {
+            maze[maze.length - 1][j] = 1; // Create a path in the last row
+        }
+    }
 
-        // Backtrack if not found
-        path.remove(path.size() - 1);
-        return false;
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(MazeSolver::play);
     }
 }
