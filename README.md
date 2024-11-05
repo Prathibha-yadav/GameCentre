@@ -1,7 +1,3 @@
-Here's an updated README with additional details about the games, some of which are now fully implemented, and instructions to reflect the recent changes. I've removed games marked as "to be implemented" if they are now complete.
-
----
-
 # Game Centre
 
 ## Overview
